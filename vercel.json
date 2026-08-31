@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/cron/save-price-changes",
-      "schedule": "0 0 * * *"
-    }
-  ]
-}
