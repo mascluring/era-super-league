@@ -6,7 +6,7 @@ import { ArrowDown, ArrowUp, Crown, Medal, RefreshCw, Search, Trophy, Users, Zap
 const fmt=(n:number)=>new Intl.NumberFormat('id-ID').format(n);
 const initials=(name:string)=>name.split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();
 type Row={entry:number;entry_name:string;player_name:string;rank:number;last_rank:number;total:number;event_total:number};
-type PickPlayer={id:number;name:string;elementType:number;teamCode:number;teamShortName:string;jerseyUrl:string;position:number;multiplier:number;isCaptain:boolean;isVice:boolean;points:number;rawPoints:number;minutes:number};
+type PickPlayer={id:number;name:string;elementType:number;teamCode:number;teamShortName:string;jerseyUrl:string;position:number;multiplier:number;isCaptain:boolean;isVice:boolean;points:number;rawPoints:number;minutes:number;goals_scored:number;assists:number;saves:number;clean_sheets:number;bonus:number;yellow_cards:number;red_cards:number;own_goals:number};
 type Detail={
   entry:number;
   captainName:string;
@@ -33,6 +33,8 @@ export default function Home(){
  const [data,setData]=useState<Data|null>(null),[analytics,setAnalytics]=useState<any>(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(1),[sort,setSort]=useState<'rank'|'gw'|'total'|'move'>('rank');
  const [expandedEntry, setExpandedEntry] = useState<number|null>(null);
  const [viewMode, setViewMode] = useState<'pitch'|'list'>('pitch');
+ const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
+ const closePlayerPopup = () => setSelectedPlayer(null);
 
  const load=async(p=page)=>{setLoading(true);setError('');try{
     const [r1, r2] = await Promise.all([
@@ -62,7 +64,7 @@ export default function Home(){
  return <main>
   <section className="hero"><div className="hero-orb orb-one"/><div className="hero-orb orb-two"/><div className="container hero-inner">
    <div className="hero-top"><div className="brand-pill"><Trophy size={15}/> FANTASY PREMIER LEAGUE</div><div className="id-pill">LEAGUE ID <b>134820</b></div></div>
-   <div className="hero-copy"><div className="eyebrow">2026 / 27 • CLASSIC LEAGUE • V5.5.2</div><h1>ERA <span>SUPER</span> LEAGUE</h1><p>Command center untuk memantau klasemen, momentum ranking, performa Gameweek, dan manager terbaik dalam satu dashboard.</p></div>
+   <div className="hero-copy"><div className="eyebrow">2026 / 27 • CLASSIC LEAGUE • V6.0</div><h1>ERA <span>SUPER</span> LEAGUE</h1><p>Command center untuk memantau klasemen, momentum ranking, performa Gameweek, dan manager terbaik dalam satu dashboard.</p></div>
    <div className="hero-meta"><span><i/> Live FPL Data</span><span>Gameweek {data?.current??'—'}</span><span>FPL API • retry 3x</span></div>
   </div></section>
   <div className="container page-shell">
@@ -105,7 +107,7 @@ export default function Home(){
     </Link>
     <Link href="/fixtures" className="compare-button text-blue-300 border-blue-500/40 bg-blue-500/10">
       <Calendar size={14}/> Fixtures
-    </Link><Link href="/price-changes" className="compare-button text-emerald-300 border-emerald-500/40 bg-emerald-500/10"><TrendingUp size={14}/> Price Changes</Link><Link href="/top-performers" className="compare-button text-amber-300 border-amber-500/40 bg-amber-500/10"><Trophy size={14}/> GW Top Performers</Link><Link href="/analytics" className="compare-button"><Sparkles size={14}/> League Analytics</Link><Link href="/compare" className="compare-button"><BarChart3 size={14}/> Compare Manager</Link></div><div className="sorts"><span>Urutkan:</span>{(['rank','gw','total','move'] as const).map(s=><button key={s} className={sort===s?'active':''} onClick={()=>setSort(s)}>{s==='rank'?'Rank':s==='gw'?'GW Points':s==='total'?'Total':'Movement'}</button>)}</div>
+    </Link><Link href="/price-changes" className="compare-button text-emerald-300 border-emerald-500/40 bg-emerald-500/10"><TrendingUp size={14}/> Price Changes</Link><Link href="/top-performers" className="compare-button text-amber-300 border-amber-500/40 bg-amber-500/10"><Trophy size={14}/> GW Top Performers</Link><Link href="/live" className="compare-button text-rose-300 border-rose-500/40 bg-rose-500/10"><Zap size={14}/> Live Center</Link><Link href="/analytics" className="compare-button"><Sparkles size={14}/> League Analytics</Link><Link href="/compare" className="compare-button"><BarChart3 size={14}/> Compare Manager</Link></div><div className="sorts"><span>Urutkan:</span>{(['rank','gw','total','move'] as const).map(s=><button key={s} className={sort===s?'active':''} onClick={()=>setSort(s)}>{s==='rank'?'Rank':s==='gw'?'GW Points':s==='total'?'Total':'Movement'}</button>)}</div>
     <div className="table-scroll"><table className="rank-table">
      <thead>
       <tr>
@@ -196,7 +198,7 @@ export default function Home(){
 
                  {/* LAPANGAN HIJAU PITCH VIEW */}
                  {viewMode === 'pitch' ? (
-                   <PitchView detail={detail} picksList={detail?.picksList || []} />
+                   <PitchView detail={detail} picksList={detail?.picksList || []} onPlayerClick={(p) => setSelectedPlayer(p)} />
                  ) : (
                    <ListView picksList={detail?.picksList || []} />
                  )}
@@ -211,14 +213,24 @@ export default function Home(){
     </table></div>
     <div className="pager"><span>Halaman <b>{page}</b>{data?.hasNext?' • lanjut untuk melihat 50 berikutnya':''}</span><div><button disabled={page===1||loading} onClick={()=>setPage(p=>Math.max(1,p-1))}>← Prev</button><button disabled={!data?.hasNext||loading} onClick={()=>setPage(p=>p+1)}>Next →</button><button className="refresh" onClick={()=>load(page)} disabled={loading}><RefreshCw size={14} className={loading?'spin':''}/> Refresh</button></div></div>
    </section>
-   <div className="v3-note"><Sparkles size={16}/><div><b>V5.5.2 Interactive Pitch View</b><span>Formasi dapat diklik langsung untuk membuka visual pitch view lapangan dan perhitungan poin real-time.</span></div></div>
-   <footer>ERA SUPER LEAGUE • FPL Dashboard • League ID 134820 • Data from Fantasy Premier League</footer>
+   <div className="v3-note"><Sparkles size={16}/><div><b>V6.0 Interactive Pitch View</b><span>Formasi dapat diklik langsung untuk membuka visual pitch view lapangan dan perhitungan poin real-time.</span></div></div>
+   <footer>ERA SUPER LEAGUE • V6.0 Dashboard • League ID 134820 • Data from Fantasy Premier League</footer>
   </div>
  </main>
 }
 
+function StatRow({ label, value, points }: { label: string; value: number; points: number }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 items-center">
+      <div className="text-slate-200">{label}</div>
+      <div className="text-center font-bold text-white">{value}</div>
+      <div className="text-right font-bold text-emerald-400">{points} pts</div>
+    </div>
+  );
+}
+
 // Komponen Pitch View Lapangan Hijau persis seperti gambar FPL
-function PitchView({ detail, picksList }: { detail?: Detail; picksList: PickPlayer[] }) {
+function PitchView({ detail, picksList, onPlayerClick }: { detail?: Detail; picksList: PickPlayer[]; onPlayerClick: (p: PickPlayer) => void }) {
   const starters = picksList.filter(p => p.position <= 11);
   const bench = picksList.filter(p => p.position > 11);
 
@@ -236,22 +248,22 @@ function PitchView({ detail, picksList }: { detail?: Detail; picksList: PickPlay
 
       {/* GKP */}
       <div className="flex justify-center my-3 relative z-10">
-        {gkp.map(p => <PlayerCard key={p.id} player={p} />)}
+        {gkp.map(p => <PlayerCard key={p.id} player={p} onClick={() => onPlayerClick(p)} />)}
       </div>
 
       {/* DEF */}
       <div className="flex justify-around my-4 relative z-10">
-        {def.map(p => <PlayerCard key={p.id} player={p} />)}
+        {def.map(p => <PlayerCard key={p.id} player={p} onClick={() => onPlayerClick(p)} />)}
       </div>
 
       {/* MID */}
       <div className="flex justify-around my-4 relative z-10">
-        {mid.map(p => <PlayerCard key={p.id} player={p} />)}
+        {mid.map(p => <PlayerCard key={p.id} player={p} onClick={() => onPlayerClick(p)} />)}
       </div>
 
       {/* FWD */}
       <div className="flex justify-around my-4 relative z-10">
-        {fwd.map(p => <PlayerCard key={p.id} player={p} />)}
+        {fwd.map(p => <PlayerCard key={p.id} player={p} onClick={() => onPlayerClick(p)} />)}
       </div>
 
       {/* BENCH SECTION */}
@@ -259,7 +271,7 @@ function PitchView({ detail, picksList }: { detail?: Detail; picksList: PickPlay
         <div className="mt-8 pt-4 border-t border-emerald-300/30 relative z-10 bg-black/40 rounded-xl p-3">
           <div className="text-xs uppercase font-bold text-emerald-200 mb-2">BENCH PLAYERS ({detail?.benchPoints || 0} PTS)</div>
           <div className="flex justify-around">
-            {bench.map(p => <PlayerCard key={p.id} player={p} isBench />)}
+            {bench.map(p => <PlayerCard key={p.id} player={p} isBench onClick={() => onPlayerClick(p)} />)}
           </div>
         </div>
       )}
@@ -267,9 +279,56 @@ function PitchView({ detail, picksList }: { detail?: Detail; picksList: PickPlay
   );
 }
 
-function PlayerCard({ player, isBench }: { player: PickPlayer; isBench?: boolean }) {
+function PlayerPopup({ player, onClose }: { player: PickPlayer; onClose: () => void }) {
   return (
-    <div className={`player-card text-center flex flex-col items-center mx-1 ${isBench ? 'opacity-90' : ''}`}>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-slate-900 rounded-xl border border-slate-700 max-w-sm w-full shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-slate-800">
+          <h3 className="text-2xl font-black text-white">{player.name}</h3>
+        </div>
+        
+        <div className="p-6">
+          <h4 className="text-lg font-bold text-white mb-4">Points breakdown</h4>
+          
+          <div className="grid grid-cols-3 gap-2 text-sm text-slate-400 mb-2 font-semibold uppercase tracking-wider">
+            <div>Statistic</div>
+            <div className="text-center">Value</div>
+            <div className="text-right">Points</div>
+          </div>
+
+          <div className="space-y-3 text-sm text-slate-300">
+            <StatRow label="Minutes played" value={player.minutes} points={player.minutes >= 60 ? 2 : player.minutes > 0 ? 1 : 0} />
+            <StatRow label="Goals scored" value={player.goals_scored} points={player.goals_scored * 4} />
+            <StatRow label="Assists" value={player.assists} points={player.assists * 3} />
+            <StatRow label="Clean sheets" value={player.clean_sheets} points={player.elementType >= 2 ? 4 : 6} />
+            <StatRow label="Saves" value={player.elementType === 1 ? player.saves : 0} points={player.elementType === 1 ? Math.floor(player.saves / 3) : 0} />
+            <StatRow label="Bonus" value={player.bonus} points={player.bonus} />
+            <StatRow label="Def. contrib" value={player.goals_scored + player.assists} points={(player.goals_scored * 4) + (player.assists * 3)} />
+            <StatRow label="Yellow Cards (YC)" value={player.yellow_cards} points={player.yellow_cards * -1} />
+            <StatRow label="Red Cards (xA)" value={player.red_cards} points={player.red_cards * -3} />
+            <StatRow label="Own Goals" value={player.own_goals} points={player.own_goals * -2} />
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center text-white">
+            <span className="font-bold text-lg">Total Points:</span>
+            <span className="font-black text-2xl">{player.points}</span>
+          </div>
+        </div>
+        
+        <div className="p-4 bg-slate-800">
+          <button onClick={onClose} className="w-full bg-slate-700 py-2 rounded-lg text-sm font-semibold text-white hover:bg-slate-600">Tutup</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayerCard({ player, isBench, onClick }: { player: PickPlayer; isBench?: boolean; onClick?: () => void }) {
+  return (
+    <div 
+      className={`player-card text-center flex flex-col items-center mx-1 ${isBench ? 'opacity-90' : ''} cursor-pointer transition-all duration-300 ease-out active:scale-95 active:shadow-[0_0_15px_rgba(255,255,255,0.5)]`}
+      onClick={onClick}
+    >
       <div className="jersey-icon relative mb-1.5 flex justify-center items-center">
         {player.jerseyUrl ? (
           <img 
